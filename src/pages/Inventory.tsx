@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, Package, TrendingUp, History, BarChart3, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import Dashboard from "@/components/inventory/Dashboard";
 import PartsInventory from "@/components/inventory/PartsInventory";
 import TransactionForm from "@/components/inventory/TransactionForm";
 import TransactionHistory from "@/components/inventory/TransactionHistory";
+import { ShoppingList } from "@/components/shopping/ShoppingList";
 
 export default function Inventory() {
   const navigate = useNavigate();
@@ -77,18 +78,26 @@ export default function Inventory() {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6 bg-card p-1 rounded-xl shadow-md border border-primary/10">
-          <TabsTrigger value="dashboard" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            📊 داشبورد
+        <TabsList className="grid w-full grid-cols-5 mb-6 bg-card p-1 rounded-xl shadow-md border border-primary/10">
+          <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">داشبورد</span>
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            📦 فهرست قطعات
+          <TabsTrigger value="inventory" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
+            <Package className="h-4 w-4" />
+            <span className="hidden sm:inline">قطعات</span>
           </TabsTrigger>
-          <TabsTrigger value="transaction" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            ➕➖ ثبت تراکنش
+          <TabsTrigger value="transaction" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">تراکنش</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            📜 تاریخچه
+          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">تاریخچه</span>
+          </TabsTrigger>
+          <TabsTrigger value="shopping" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden sm:inline">بازرگانی</span>
           </TabsTrigger>
         </TabsList>
 
@@ -104,6 +113,9 @@ export default function Inventory() {
           </TabsContent>
           <TabsContent value="history" className="mt-0">
             <TransactionHistory />
+          </TabsContent>
+          <TabsContent value="shopping" className="mt-0">
+            <ShoppingList />
           </TabsContent>
         </div>
       </Tabs>
