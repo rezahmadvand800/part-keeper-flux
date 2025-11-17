@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Search, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import PartsTable from "./PartsTable";
@@ -22,6 +20,8 @@ interface Part {
   datasheet_url: string;
 }
 
+const STORAGE_KEY = 'parts';
+
 export default function PartsInventory() {
   const [parts, setParts] = useState<Part[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,38 +31,30 @@ export default function PartsInventory() {
 
   useEffect(() => {
     fetchParts();
-
-    const channel = supabase
-      .channel('parts-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'parts'
-        },
-        () => fetchParts()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
-  const fetchParts = async () => {
-    const { data, error } = await supabase
-      .from('parts')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching parts:', error);
+  const fetchParts = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setParts(JSON.parse(stored));
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading parts:', error);
       toast.error("خطا در دریافت لیست قطعات");
-    } else {
-      setParts(data || []);
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const saveParts = (newParts: Part[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newParts));
+      setParts(newParts);
+    } catch (error) {
+      console.error('Error saving parts:', error);
+      toast.error("خطا در ذخیره قطعات");
+    }
   };
 
   const filteredParts = parts.filter(part => {
@@ -110,9 +102,9 @@ export default function PartsInventory() {
       </div>
 
       {viewMode === "add" ? (
-        <AddPartForm onSuccess={fetchParts} />
+        <AddPartForm onSuccess={fetchParts} saveParts={saveParts} parts={parts} />
       ) : (
-        <ImportPartsForm onSuccess={fetchParts} />
+        <ImportPartsForm onSuccess={fetchParts} saveParts={saveParts} parts={parts} />
       )}
 
       <div className="relative">
@@ -130,6 +122,8 @@ export default function PartsInventory() {
         parts={filteredParts}
         onEdit={setEditingPart}
         searchTerm={searchTerm}
+        saveParts={saveParts}
+        allParts={parts}
       />
 
       {editingPart && (
@@ -137,6 +131,8 @@ export default function PartsInventory() {
           part={editingPart}
           onClose={() => setEditingPart(null)}
           onSuccess={fetchParts}
+          saveParts={saveParts}
+          allParts={parts}
         />
       )}
     </div>
