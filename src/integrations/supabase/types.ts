@@ -59,6 +59,60 @@ export type Database = {
         }
         Relationships: []
       }
+      shopping_list_items: {
+        Row: {
+          color: string
+          created_at: string
+          full_info: string | null
+          group_name: string
+          height: string | null
+          id: string
+          price: number
+          quantity: number
+          short_info: string | null
+          sort_order: number | null
+          suppliers: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+          width: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          full_info?: string | null
+          group_name?: string
+          height?: string | null
+          id?: string
+          price?: number
+          quantity?: number
+          short_info?: string | null
+          sort_order?: number | null
+          suppliers?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+          width?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          full_info?: string | null
+          group_name?: string
+          height?: string | null
+          id?: string
+          price?: number
+          quantity?: number
+          short_info?: string | null
+          sort_order?: number | null
+          suppliers?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          width?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           created_at: string
