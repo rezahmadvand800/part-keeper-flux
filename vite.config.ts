@@ -17,5 +17,5 @@ export default defineConfig(({ mode }) => ({
   },
 }));
 export default defineConfig({
-  base: "/REPO_NAME/",
+  base: "/part-keeper-flux/",
 });
