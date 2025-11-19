@@ -22,15 +22,15 @@ export function ShoppingListBoard({ items, onEdit, onDelete, onReorder }: Shoppi
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 px-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-          <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+      <div className="text-center py-20 px-4">
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-accent/10 mb-6 shadow-lg">
+          <svg className="w-12 h-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">لیست خرید خالی است</h3>
-        <p className="text-sm text-muted-foreground">
-          برای شروع، از دکمه + در پایین صفحه استفاده کنید
+        <h3 className="text-2xl font-bold text-foreground mb-3">لیست خرید خالی است</h3>
+        <p className="text-base text-muted-foreground max-w-md mx-auto">
+          برای شروع، از دکمه <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mx-1">+</span> در پایین صفحه استفاده کنید
         </p>
       </div>
     );
@@ -43,8 +43,8 @@ export function ShoppingListBoard({ items, onEdit, onDelete, onReorder }: Shoppi
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 rounded-xl transition-colors ${
-              snapshot.isDraggingOver ? 'bg-accent/20' : ''
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 rounded-2xl transition-all duration-300 ${
+              snapshot.isDraggingOver ? 'bg-primary/5 ring-2 ring-primary/20' : 'bg-transparent'
             }`}
           >
             {items.map((item, index) => (
