@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Edit, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Part {
@@ -19,25 +18,19 @@ interface PartsTableProps {
   parts: Part[];
   onEdit: (part: Part) => void;
   searchTerm: string;
+  saveParts: (newParts: Part[]) => void;
+  allParts: Part[];
 }
 
-export default function PartsTable({ parts, onEdit, searchTerm }: PartsTableProps) {
-  const handleDelete = async (part: Part) => {
+export default function PartsTable({ parts, onEdit, searchTerm, saveParts, allParts }: PartsTableProps) {
+  const handleDelete = (part: Part) => {
     if (!window.confirm(`آیا از حذف قطعه "${part.name}" اطمینان دارید؟`)) {
       return;
     }
 
-    const { error } = await supabase
-      .from('parts')
-      .delete()
-      .eq('id', part.id);
-
-    if (error) {
-      console.error('Error deleting part:', error);
-      toast.error("خطا در حذف قطعه");
-    } else {
-      toast.success(`قطعه ${part.name} با موفقیت حذف شد`);
-    }
+    const updatedParts = allParts.filter(p => p.id !== part.id);
+    saveParts(updatedParts);
+    toast.success(`قطعه ${part.name} با موفقیت حذف شد`);
   };
 
   return (

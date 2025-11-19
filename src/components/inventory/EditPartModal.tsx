@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,9 +20,11 @@ interface EditPartModalProps {
   part: Part;
   onClose: () => void;
   onSuccess: () => void;
+  saveParts: (newParts: Part[]) => void;
+  allParts: Part[];
 }
 
-export default function EditPartModal({ part, onClose, onSuccess }: EditPartModalProps) {
+export default function EditPartModal({ part, onClose, onSuccess, saveParts, allParts }: EditPartModalProps) {
   const [formData, setFormData] = useState({
     name: part.name,
     category: part.category,
@@ -35,7 +36,7 @@ export default function EditPartModal({ part, onClose, onSuccess }: EditPartModa
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.location) {
@@ -45,27 +46,24 @@ export default function EditPartModal({ part, onClose, onSuccess }: EditPartModa
 
     setLoading(true);
 
-    const { error } = await supabase
-      .from('parts')
-      .update({
-        name: formData.name,
-        category: formData.category,
-        footprint: formData.footprint,
-        location: formData.location,
-        mpn: formData.mpn.trim(),
-        datasheet_url: formData.datasheet_url.trim(),
-      })
-      .eq('id', part.id);
+    const updatedParts = allParts.map(p =>
+      p.id === part.id
+        ? {
+            ...p,
+            name: formData.name,
+            category: formData.category,
+            footprint: formData.footprint,
+            location: formData.location,
+            mpn: formData.mpn.trim(),
+            datasheet_url: formData.datasheet_url.trim(),
+          }
+        : p
+    );
 
-    if (error) {
-      console.error('Error updating part:', error);
-      toast.error("خطا در ویرایش قطعه");
-    } else {
-      toast.success(`قطعه ${formData.name} با موفقیت ویرایش شد`);
-      onSuccess();
-      onClose();
-    }
-
+    saveParts(updatedParts);
+    toast.success(`قطعه ${formData.name} با موفقیت ویرایش شد`);
+    onSuccess();
+    onClose();
     setLoading(false);
   };
 

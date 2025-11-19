@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,11 +6,25 @@ import { Card } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 
-interface AddPartFormProps {
-  onSuccess: () => void;
+interface Part {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  footprint: string;
+  location: string;
+  quantity: number;
+  mpn: string;
+  datasheet_url: string;
 }
 
-export default function AddPartForm({ onSuccess }: AddPartFormProps) {
+interface AddPartFormProps {
+  onSuccess: () => void;
+  saveParts: (newParts: Part[]) => void;
+  parts: Part[];
+}
+
+export default function AddPartForm({ onSuccess, saveParts, parts }: AddPartFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -25,7 +38,7 @@ export default function AddPartForm({ onSuccess }: AddPartFormProps) {
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.sku || !formData.location) {
@@ -40,48 +53,40 @@ export default function AddPartForm({ onSuccess }: AddPartFormProps) {
 
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const sku = formData.sku.toUpperCase().trim();
     
-    if (!user) {
-      toast.error("لطفاً ابتدا وارد شوید");
+    // Check for duplicate SKU
+    if (parts.some(p => p.sku === sku)) {
+      toast.error(`قطعه با SKU: ${formData.sku} قبلاً ثبت شده است`);
       setLoading(false);
       return;
     }
 
-    const { error } = await supabase.from('parts').insert({
-      user_id: user.id,
+    const newPart: Part = {
+      id: crypto.randomUUID(),
       name: formData.name,
-      sku: formData.sku.toUpperCase().trim(),
+      sku,
       category: formData.category,
       footprint: formData.footprint,
       location: formData.location,
       quantity: formData.quantity,
       mpn: formData.mpn.trim(),
       datasheet_url: formData.datasheet_url.trim(),
+    };
+
+    saveParts([...parts, newPart]);
+    toast.success(`قطعه ${formData.name} با موفقیت افزوده شد`);
+    setFormData({
+      name: "",
+      sku: "",
+      category: "مقاومت",
+      footprint: "",
+      location: "",
+      quantity: 0,
+      mpn: "",
+      datasheet_url: "",
     });
-
-    if (error) {
-      if (error.message.includes('duplicate key')) {
-        toast.error(`قطعه با SKU: ${formData.sku} قبلاً ثبت شده است`);
-      } else {
-        toast.error("خطا در افزودن قطعه");
-        console.error('Error adding part:', error);
-      }
-    } else {
-      toast.success(`قطعه ${formData.name} با موفقیت افزوده شد`);
-      setFormData({
-        name: "",
-        sku: "",
-        category: "مقاومت",
-        footprint: "",
-        location: "",
-        quantity: 0,
-        mpn: "",
-        datasheet_url: "",
-      });
-      onSuccess();
-    }
-
+    onSuccess();
     setLoading(false);
   };
 
