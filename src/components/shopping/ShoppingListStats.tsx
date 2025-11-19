@@ -47,63 +47,76 @@ export function ShoppingListStats({ items }: ShoppingListStatsProps) {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6 border-r-4 border-primary">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">تعداد آیتم‌ها</p>
-              <p className="text-3xl font-bold text-foreground mt-1">
-                {stats.totalItems.toLocaleString('fa-IR')}
-              </p>
-            </div>
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Package className="w-6 h-6 text-primary" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 border-r-4 border-success">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">مجموع تعداد</p>
-              <p className="text-3xl font-bold text-foreground mt-1">
-                {stats.totalQuantity.toLocaleString('fa-IR')}
-              </p>
-            </div>
-            <div className="p-3 bg-success/10 rounded-full">
-              <Layers className="w-6 h-6 text-success" />
+        <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent" />
+          <div className="relative p-6 border-r-4 border-primary">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium mb-2">تعداد آیتم‌ها</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {stats.totalItems.toLocaleString('fa-IR')}
+                </p>
+              </div>
+              <div className="p-4 bg-primary/15 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <Package className="w-7 h-7 text-primary" />
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border-r-4 border-warning">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">مجموع هزینه</p>
-              <p className="text-2xl font-bold text-foreground mt-1">
-                {currencyFormatter.format(stats.totalValue)}
-              </p>
-            </div>
-            <div className="p-3 bg-warning/10 rounded-full">
-              <DollarSign className="w-6 h-6 text-warning" />
+        <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-success/10 via-success/5 to-transparent" />
+          <div className="relative p-6 border-r-4 border-success">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium mb-2">مجموع تعداد</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {stats.totalQuantity.toLocaleString('fa-IR')}
+                </p>
+              </div>
+              <div className="p-4 bg-success/15 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <Layers className="w-7 h-7 text-success" />
+              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border-r-4 border-accent">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">تامین‌کنندگان</p>
-              <p className="text-3xl font-bold text-foreground mt-1">
-                {stats.suppliersCount.toLocaleString('fa-IR')}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.groupsCount} گروه
-              </p>
+        <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-warning/10 via-warning/5 to-transparent" />
+          <div className="relative p-6 border-r-4 border-warning">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium mb-2">مجموع هزینه</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {currencyFormatter.format(stats.totalValue)}
+                </p>
+              </div>
+              <div className="p-4 bg-warning/15 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <DollarSign className="w-7 h-7 text-warning" />
+              </div>
             </div>
-            <div className="p-3 bg-accent/10 rounded-full">
-              <Users className="w-6 h-6 text-accent" />
+          </div>
+        </Card>
+
+        <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent" />
+          <div className="relative p-6 border-r-4 border-accent">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground font-medium mb-2">تامین‌کنندگان</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {stats.suppliersCount.toLocaleString('fa-IR')}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent"></span>
+                  {stats.groupsCount} گروه
+                </p>
+              </div>
+              <div className="p-4 bg-accent/15 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <Users className="w-7 h-7 text-accent" />
+              </div>
             </div>
           </div>
         </Card>
