@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Edit, Trash2 } from "lucide-react";
+import { ExternalLink, Edit, Trash2, Package, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 interface Part {
@@ -34,20 +34,21 @@ export default function PartsTable({ parts, onEdit, searchTerm, saveParts, allPa
   };
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border shadow-md">
-      <table className="w-full text-right border-collapse">
-        <thead className="bg-gradient-primary text-primary-foreground">
-          <tr>
-            <th className="p-4 rounded-tr-xl">نام قطعه</th>
-            <th className="p-4">SKU</th>
-            <th className="p-4">MPN</th>
-            <th className="p-4">دسته</th>
-            <th className="p-4">مکان</th>
-            <th className="p-4 text-center">موجودی</th>
-            <th className="p-4 text-center">دیتاشیت</th>
-            <th className="p-4 text-center rounded-tl-xl">عملیات</th>
-          </tr>
-        </thead>
+    <div className="overflow-hidden rounded-2xl border-2 border-primary/10 shadow-2xl bg-card">
+      <div className="overflow-x-auto">
+        <table className="w-full text-right border-collapse">
+          <thead className="bg-gradient-primary text-primary-foreground">
+            <tr>
+              <th className="p-5 text-sm font-black uppercase tracking-wide">نام قطعه</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide">SKU</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide">MPN</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide">دسته</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide">مکان</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide text-center">موجودی</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide text-center">دیتاشیت</th>
+              <th className="p-5 text-sm font-black uppercase tracking-wide text-center">عملیات</th>
+            </tr>
+          </thead>
         <tbody>
           {parts.length === 0 ? (
             <tr>
@@ -125,5 +126,6 @@ export default function PartsTable({ parts, onEdit, searchTerm, saveParts, allPa
         </tbody>
       </table>
     </div>
-  );
+  </div>
+);
 }

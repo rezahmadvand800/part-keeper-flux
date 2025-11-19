@@ -1,11 +1,6 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { LogOut, Loader2, Package, TrendingUp, History, BarChart3, ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
+import { Package, TrendingUp, History, BarChart3, ShoppingCart, Warehouse } from "lucide-react";
 import Dashboard from "@/components/inventory/Dashboard";
 import PartsInventory from "@/components/inventory/PartsInventory";
 import TransactionForm from "@/components/inventory/TransactionForm";
@@ -13,111 +8,101 @@ import TransactionHistory from "@/components/inventory/TransactionHistory";
 import { ShoppingList } from "@/components/shopping/ShoppingList";
 
 export default function Inventory() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
-
-  useEffect(() => {
-    // Check authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("با موفقیت خارج شدید");
-    navigate("/auth");
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-subtle p-4 md:p-8" dir="rtl">
-      <header className="bg-card p-6 rounded-2xl shadow-lg mb-6 border border-primary/10 animate-fade-in">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-              سیستم مدیریت موجودی انبار
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              کاربر: <span className="font-semibold text-foreground">{user?.email}</span>
-            </p>
+      {/* Professional Header with Glassmorphism Effect */}
+      <header className="relative overflow-hidden bg-card/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl mb-8 border border-primary/20 animate-fade-in">
+        <div className="absolute inset-0 bg-gradient-primary opacity-5"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="p-3 bg-primary/10 rounded-2xl">
+              <Warehouse className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black bg-gradient-primary bg-clip-text text-transparent tracking-tight">
+                سیستم مدیریت موجودی انبار
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+                نسخه آفلاین - ذخیره‌سازی محلی در مرورگر
+              </p>
+            </div>
           </div>
-          <Button
-            onClick={handleSignOut}
-            variant="outline"
-            className="gap-2 hover:bg-destructive hover:text-destructive-foreground transition-smooth"
-          >
-            <LogOut className="h-4 w-4" />
-            خروج
-          </Button>
         </div>
       </header>
 
+      {/* Professional Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6 bg-card p-1 rounded-xl shadow-md border border-primary/10">
-          <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">داشبورد</span>
+        <TabsList className="grid w-full grid-cols-5 mb-8 bg-card/80 backdrop-blur-xl p-2 rounded-2xl shadow-xl border border-primary/10 h-auto">
+          <TabsTrigger 
+            value="dashboard" 
+            className="gap-2 rounded-xl py-3 px-4 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-primary transition-all duration-300 hover:scale-105"
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span className="hidden sm:inline font-semibold">داشبورد</span>
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            <Package className="h-4 w-4" />
-            <span className="hidden sm:inline">قطعات</span>
+          <TabsTrigger 
+            value="inventory" 
+            className="gap-2 rounded-xl py-3 px-4 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-primary transition-all duration-300 hover:scale-105"
+          >
+            <Package className="h-5 w-5" />
+            <span className="hidden sm:inline font-semibold">قطعات</span>
           </TabsTrigger>
-          <TabsTrigger value="transaction" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">تراکنش</span>
+          <TabsTrigger 
+            value="transaction" 
+            className="gap-2 rounded-xl py-3 px-4 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-primary transition-all duration-300 hover:scale-105"
+          >
+            <TrendingUp className="h-5 w-5" />
+            <span className="hidden sm:inline font-semibold">تراکنش</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            <History className="h-4 w-4" />
-            <span className="hidden sm:inline">تاریخچه</span>
+          <TabsTrigger 
+            value="history" 
+            className="gap-2 rounded-xl py-3 px-4 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-primary transition-all duration-300 hover:scale-105"
+          >
+            <History className="h-5 w-5" />
+            <span className="hidden sm:inline font-semibold">تاریخچه</span>
           </TabsTrigger>
-          <TabsTrigger value="shopping" className="gap-2 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground transition-smooth">
-            <ShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline">بازرگانی</span>
+          <TabsTrigger 
+            value="shopping" 
+            className="gap-2 rounded-xl py-3 px-4 data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-primary transition-all duration-300 hover:scale-105"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            <span className="hidden sm:inline font-semibold">خرید</span>
           </TabsTrigger>
         </TabsList>
 
-        <div className="bg-card p-6 rounded-2xl shadow-lg border border-primary/10 animate-fade-in">
-          <TabsContent value="dashboard" className="mt-0">
+        {/* Professional Tab Content with Smooth Transitions */}
+        <TabsContent value="dashboard" className="space-y-6 animate-fade-in">
+          <div className="bg-card/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-primary/10">
             <Dashboard />
-          </TabsContent>
-          <TabsContent value="inventory" className="mt-0">
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="inventory" className="space-y-6 animate-fade-in">
+          <div className="bg-card/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-primary/10">
             <PartsInventory />
-          </TabsContent>
-          <TabsContent value="transaction" className="mt-0">
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="transaction" className="space-y-6 animate-fade-in">
+          <div className="bg-card/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-primary/10">
             <TransactionForm />
-          </TabsContent>
-          <TabsContent value="history" className="mt-0">
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="history" className="space-y-6 animate-fade-in">
+          <div className="bg-card/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-primary/10">
             <TransactionHistory />
-          </TabsContent>
-          <TabsContent value="shopping" className="mt-0">
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="shopping" className="space-y-6 animate-fade-in">
+          <div className="bg-card/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-primary/10">
             <ShoppingList />
-          </TabsContent>
-        </div>
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
