@@ -1,34 +1,40 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Upload, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
-interface ImportPartsFormProps {
-  onSuccess: () => void;
+interface Part {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  footprint: string;
+  location: string;
+  quantity: number;
+  mpn: string;
+  datasheet_url: string;
 }
 
-export default function ImportPartsForm({ onSuccess }: ImportPartsFormProps) {
+interface ImportPartsFormProps {
+  onSuccess: () => void;
+  saveParts: (newParts: Part[]) => void;
+  parts: Part[];
+}
+
+export default function ImportPartsForm({ onSuccess, saveParts, parts }: ImportPartsFormProps) {
   const [dataText, setDataText] = useState("");
   const [parsedCount, setParsedCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const parseAndImport = async () => {
+  const parseAndImport = () => {
     if (!dataText.trim()) {
       toast.error("لطفاً داده‌ها را وارد کنید");
       return;
     }
 
     setLoading(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("لطفاً ابتدا وارد شوید");
-      setLoading(false);
-      return;
-    }
 
     // Detect delimiter
     const lines = dataText.trim().split('\n');
@@ -37,8 +43,10 @@ export default function ImportPartsForm({ onSuccess }: ImportPartsFormProps) {
     const commaCount = (firstLine.match(/,/g) || []).length;
     const delimiter = tabCount > commaCount ? '\t' : ',';
 
-    const partsToImport = [];
+    const partsToImport: Part[] = [];
     let errors = 0;
+    let duplicates = 0;
+    const existingSkus = new Set(parts.map(p => p.sku));
 
     lines.forEach((line, index) => {
       const columns = line.trim().split(delimiter).map(col => col.trim());
@@ -57,10 +65,18 @@ export default function ImportPartsForm({ onSuccess }: ImportPartsFormProps) {
         return;
       }
 
+      const skuUpper = sku.toUpperCase().trim();
+      
+      // Check for duplicate SKU
+      if (existingSkus.has(skuUpper)) {
+        duplicates++;
+        return;
+      }
+
       partsToImport.push({
-        user_id: user.id,
+        id: crypto.randomUUID(),
         name,
-        sku: sku.toUpperCase().trim(),
+        sku: skuUpper,
         category: category || 'سایر',
         footprint: footprint || '',
         location,
@@ -68,6 +84,8 @@ export default function ImportPartsForm({ onSuccess }: ImportPartsFormProps) {
         mpn: mpn || '',
         datasheet_url: datasheetUrl || '',
       });
+      
+      existingSkus.add(skuUpper);
     });
 
     if (partsToImport.length === 0) {
@@ -78,25 +96,14 @@ export default function ImportPartsForm({ onSuccess }: ImportPartsFormProps) {
 
     setParsedCount(partsToImport.length);
 
-    // Import to database
-    const { data, error } = await supabase
-      .from('parts')
-      .insert(partsToImport)
-      .select();
+    saveParts([...parts, ...partsToImport]);
+    toast.success(`${partsToImport.length} قطعه با موفقیت وارد شد`);
+    setDataText("");
+    setParsedCount(0);
+    onSuccess();
 
-    if (error) {
-      console.error('Error importing parts:', error);
-      if (error.message.includes('duplicate key')) {
-        toast.error("برخی SKU ها تکراری بودند و اضافه نشدند");
-      } else {
-        toast.error("خطا در ورود داده‌ها");
-      }
-    } else {
-      const imported = data?.length || 0;
-      toast.success(`${imported} قطعه با موفقیت وارد شد`);
-      setDataText("");
-      setParsedCount(0);
-      onSuccess();
+    if (duplicates > 0) {
+      toast.warning(`${duplicates} SKU تکراری بود و حذف شد`);
     }
 
     if (errors > 0) {
