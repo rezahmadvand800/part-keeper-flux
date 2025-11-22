@@ -7,18 +7,7 @@ import PartsTable from "./PartsTable";
 import AddPartForm from "./AddPartForm";
 import ImportPartsForm from "./ImportPartsForm";
 import EditPartModal from "./EditPartModal";
-
-interface Part {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  footprint: string;
-  location: string;
-  quantity: number;
-  mpn: string;
-  datasheet_url: string;
-}
+import { Part, safeLoadFromStorage, safeSaveToStorage, PartSchema } from "@/lib/validation";
 
 const STORAGE_KEY = 'parts';
 
@@ -34,25 +23,15 @@ export default function PartsInventory() {
   }, []);
 
   const fetchParts = () => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setParts(JSON.parse(stored));
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading parts:', error);
-      toast.error("خطا در دریافت لیست قطعات");
-      setLoading(false);
-    }
+    const loadedParts = safeLoadFromStorage(STORAGE_KEY, PartSchema);
+    setParts(loadedParts);
+    setLoading(false);
   };
 
   const saveParts = (newParts: Part[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newParts));
+    if (safeSaveToStorage(STORAGE_KEY, newParts, PartSchema)) {
       setParts(newParts);
-    } catch (error) {
-      console.error('Error saving parts:', error);
+    } else {
       toast.error("خطا در ذخیره قطعات");
     }
   };

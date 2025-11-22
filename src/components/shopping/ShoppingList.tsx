@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingListBoard } from './ShoppingListBoard';
 import { AddItemForm } from './AddItemForm';
@@ -7,21 +6,9 @@ import { ShoppingListStats } from './ShoppingListStats';
 import { ShoppingListControls } from './ShoppingListControls';
 import { EditItemModal } from './EditItemModal';
 import { Plus } from 'lucide-react';
+import { ShoppingItem, safeLoadFromStorage, safeSaveToStorage, ShoppingItemSchema } from '@/lib/validation';
 
-export interface ShoppingItem {
-  id: string;
-  title: string;
-  quantity: number;
-  price: number;
-  group_name: string;
-  color: string;
-  short_info?: string;
-  full_info?: string;
-  suppliers: Array<{ name: string; price: number }>;
-  width?: string;
-  height?: string;
-  sort_order: number;
-}
+const STORAGE_KEY = 'shopping_list_items';
 
 export function ShoppingList() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
@@ -34,69 +21,12 @@ export function ShoppingList() {
 
   useEffect(() => {
     fetchItems();
-    subscribeToChanges();
   }, []);
 
-  const fetchItems = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('shopping_list_items')
-        .select('*')
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      
-      // Transform data to match ShoppingItem interface
-      const transformedData = (data || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        quantity: item.quantity,
-        price: item.price,
-        group_name: item.group_name,
-        color: item.color,
-        short_info: item.short_info,
-        full_info: item.full_info,
-        suppliers: Array.isArray(item.suppliers) ? item.suppliers as Array<{ name: string; price: number }> : [],
-        width: item.width,
-        height: item.height,
-        sort_order: item.sort_order,
-      }));
-      
-      setItems(transformedData);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-      toast({
-        title: 'خطا در بارگذاری',
-        description: 'امکان بارگذاری لیست خرید وجود ندارد',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const subscribeToChanges = () => {
-    const channel = supabase
-      .channel('shopping_list_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'shopping_list_items',
-        },
-        () => {
-          fetchItems();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  const fetchItems = () => {
+    const loadedItems = safeLoadFromStorage(STORAGE_KEY, ShoppingItemSchema);
+    setItems(loadedItems);
+    setIsLoading(false);
   };
 
   const groups = useMemo(() => {
@@ -123,31 +53,30 @@ export function ShoppingList() {
     return result;
   }, [items, selectedGroup, searchTerm]);
 
-  const handleAddItem = async (itemData: Omit<ShoppingItem, 'id' | 'sort_order'>) => {
+  const handleAddItem = (itemData: Omit<ShoppingItem, 'id' | 'sort_order'>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
       const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.sort_order)) : 0;
+      
+      const newItem: ShoppingItem = {
+        ...itemData,
+        id: crypto.randomUUID(),
+        sort_order: maxOrder + 1,
+      };
 
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .insert({
-          ...itemData,
-          user_id: user.id,
-          sort_order: maxOrder + 1,
+      const newItems = [...items, newItem];
+      
+      if (safeSaveToStorage(STORAGE_KEY, newItems, ShoppingItemSchema)) {
+        setItems(newItems);
+        toast({
+          title: 'آیتم افزوده شد',
+          description: `${itemData.title} با موفقیت به لیست اضافه شد`,
         });
-
-      if (error) throw error;
-
-      toast({
-        title: 'آیتم افزوده شد',
-        description: `${itemData.title} با موفقیت به لیست اضافه شد`,
-      });
-      setIsFormOpen(false);
-      setSelectedGroup(itemData.group_name);
+        setIsFormOpen(false);
+        setSelectedGroup(itemData.group_name);
+      } else {
+        throw new Error('خطا در ذخیره‌سازی');
+      }
     } catch (error) {
-      console.error('Error adding item:', error);
       toast({
         title: 'خطا در افزودن',
         description: 'امکان افزودن آیتم وجود ندارد',
@@ -156,23 +85,21 @@ export function ShoppingList() {
     }
   };
 
-  const handleUpdateItem = async (itemData: ShoppingItem) => {
+  const handleUpdateItem = (itemData: ShoppingItem) => {
     try {
-      const { id, ...updateData } = itemData;
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'آیتم به‌روزرسانی شد',
-        description: 'تغییرات با موفقیت ذخیره شد',
-      });
-      setEditingItem(null);
+      const newItems = items.map(item => item.id === itemData.id ? itemData : item);
+      
+      if (safeSaveToStorage(STORAGE_KEY, newItems, ShoppingItemSchema)) {
+        setItems(newItems);
+        toast({
+          title: 'آیتم به‌روزرسانی شد',
+          description: 'تغییرات با موفقیت ذخیره شد',
+        });
+        setEditingItem(null);
+      } else {
+        throw new Error('خطا در ذخیره‌سازی');
+      }
     } catch (error) {
-      console.error('Error updating item:', error);
       toast({
         title: 'خطا در به‌روزرسانی',
         description: 'امکان به‌روزرسانی آیتم وجود ندارد',
@@ -181,23 +108,22 @@ export function ShoppingList() {
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
+  const handleDeleteItem = (id: string) => {
     if (!confirm('آیا از حذف این آیتم اطمینان دارید؟')) return;
 
     try {
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'آیتم حذف شد',
-        description: 'آیتم با موفقیت از لیست حذف شد',
-      });
+      const newItems = items.filter(item => item.id !== id);
+      
+      if (safeSaveToStorage(STORAGE_KEY, newItems, ShoppingItemSchema)) {
+        setItems(newItems);
+        toast({
+          title: 'آیتم حذف شد',
+          description: 'آیتم با موفقیت از لیست حذف شد',
+        });
+      } else {
+        throw new Error('خطا در ذخیره‌سازی');
+      }
     } catch (error) {
-      console.error('Error deleting item:', error);
       toast({
         title: 'خطا در حذف',
         description: 'امکان حذف آیتم وجود ندارد',
@@ -206,23 +132,22 @@ export function ShoppingList() {
     }
   };
 
-  const handleReorder = async (reorderedItems: ShoppingItem[]) => {
+  const handleReorder = (reorderedItems: ShoppingItem[]) => {
     try {
-      const updates = reorderedItems.map((item, index) => ({
-        id: item.id,
+      const reindexed = reorderedItems.map((item, index) => ({
+        ...item,
         sort_order: index,
       }));
-
-      for (const update of updates) {
-        await supabase
-          .from('shopping_list_items')
-          .update({ sort_order: update.sort_order })
-          .eq('id', update.id);
+      
+      if (safeSaveToStorage(STORAGE_KEY, reindexed, ShoppingItemSchema)) {
+        setItems(reindexed);
       }
-
-      setItems(reorderedItems);
     } catch (error) {
-      console.error('Error reordering items:', error);
+      toast({
+        title: 'خطا در مرتب‌سازی',
+        description: 'امکان تغییر ترتیب آیتم‌ها وجود ندارد',
+        variant: 'destructive',
+      });
     }
   };
 

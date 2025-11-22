@@ -1,20 +1,9 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Transaction, safeLoadFromStorage, TransactionSchema, Part, PartSchema } from "@/lib/validation";
 
-interface Transaction {
-  id: string;
-  part_sku: string;
-  type: string;
-  quantity: number;
-  date: string;
-  created_at: string;
-}
-
-interface Part {
-  sku: string;
-  name: string;
-}
+const TRANSACTIONS_KEY = 'transactions';
+const PARTS_KEY = 'parts';
 
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -23,48 +12,19 @@ export default function TransactionHistory() {
 
   useEffect(() => {
     fetchData();
-
-    const channel = supabase
-      .channel('transactions-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions'
-        },
-        () => fetchData()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
-  const fetchData = async () => {
-    const [transactionsResult, partsResult] = await Promise.all([
-      supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('parts')
-        .select('sku, name')
-    ]);
-
-    if (transactionsResult.error) {
-      console.error('Error fetching transactions:', transactionsResult.error);
-    } else {
-      setTransactions(transactionsResult.data || []);
-    }
-
-    if (partsResult.error) {
-      console.error('Error fetching parts:', partsResult.error);
-    } else {
-      setParts(partsResult.data || []);
-    }
-
+  const fetchData = () => {
+    const loadedTransactions = safeLoadFromStorage(TRANSACTIONS_KEY, TransactionSchema);
+    const loadedParts = safeLoadFromStorage(PARTS_KEY, PartSchema);
+    
+    // Sort by created_at descending
+    loadedTransactions.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    setTransactions(loadedTransactions);
+    setParts(loadedParts);
     setLoading(false);
   };
 

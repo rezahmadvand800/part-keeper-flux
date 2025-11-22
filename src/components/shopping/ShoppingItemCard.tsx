@@ -1,4 +1,4 @@
-import { ShoppingItem } from './ShoppingList';
+import { ShoppingItem } from '@/lib/validation';
 import { Edit2, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import {

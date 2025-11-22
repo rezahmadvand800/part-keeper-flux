@@ -4,18 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Upload, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-
-interface Part {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  footprint: string;
-  location: string;
-  quantity: number;
-  mpn: string;
-  datasheet_url: string;
-}
+import { Part, PartSchema } from "@/lib/validation";
 
 interface ImportPartsFormProps {
   onSuccess: () => void;
@@ -73,19 +62,26 @@ export default function ImportPartsForm({ onSuccess, saveParts, parts }: ImportP
         return;
       }
 
-      partsToImport.push({
-        id: crypto.randomUUID(),
-        name,
-        sku: skuUpper,
-        category: category || 'سایر',
-        footprint: footprint || '',
-        location,
-        quantity,
-        mpn: mpn || '',
-        datasheet_url: datasheetUrl || '',
-      });
-      
-      existingSkus.add(skuUpper);
+      try {
+        const newPart = {
+          id: crypto.randomUUID(),
+          name: name.trim(),
+          sku: skuUpper,
+          category: category?.trim() || 'سایر',
+          footprint: footprint?.trim() || '',
+          location: location.trim(),
+          quantity,
+          mpn: mpn?.trim() || '',
+          datasheet_url: datasheetUrl?.trim() || '',
+        };
+
+        // Validate with zod
+        const validated = PartSchema.parse(newPart);
+        partsToImport.push(validated);
+        existingSkus.add(skuUpper);
+      } catch (error) {
+        errors++;
+      }
     });
 
     if (partsToImport.length === 0) {

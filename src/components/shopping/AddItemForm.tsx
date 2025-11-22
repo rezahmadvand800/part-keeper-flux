@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ShoppingItem } from './ShoppingList';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { ShoppingItem, ShoppingItemSchema } from '@/lib/validation';
+import { toast } from 'sonner';
 
 interface AddItemFormProps {
   onAdd: (item: Omit<ShoppingItem, 'id' | 'sort_order'>) => void;
@@ -44,18 +45,32 @@ export function AddItemForm({ onAdd, onClose, existingGroups }: AddItemFormProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || quantity <= 0) return;
+    try {
+      const itemData = {
+        title: title.trim(),
+        quantity,
+        price,
+        group_name: groupName.trim(),
+        color,
+        short_info: shortInfo?.trim(),
+        full_info: fullInfo?.trim(),
+        suppliers,
+      };
 
-    onAdd({
-      title,
-      quantity,
-      price,
-      group_name: groupName,
-      color,
-      short_info: shortInfo,
-      full_info: fullInfo,
-      suppliers,
-    });
+      // Validate fields (basic check before passing to parent)
+      if (!itemData.title || itemData.quantity <= 0) {
+        toast.error('لطفاً فیلدهای الزامی را پر کنید');
+        return;
+      }
+
+      onAdd(itemData);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(`خطا: ${error.message}`);
+      } else {
+        toast.error('خطا در افزودن آیتم');
+      }
+    }
   };
 
   return (

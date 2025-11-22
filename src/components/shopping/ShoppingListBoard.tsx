@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { ShoppingItem } from './ShoppingList';
+import { ShoppingItem } from '@/lib/validation';
 import { ShoppingItemCard } from './ShoppingItemCard';
 
 interface ShoppingListBoardProps {

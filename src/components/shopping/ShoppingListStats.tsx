@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ShoppingItem } from './ShoppingList';
+import { ShoppingItem } from '@/lib/validation';
 import { Card } from '@/components/ui/card';
 import { Package, DollarSign, Users, Layers } from 'lucide-react';
 

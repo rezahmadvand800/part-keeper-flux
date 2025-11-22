@@ -5,18 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import { toast } from "sonner";
-
-interface Part {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  footprint: string;
-  location: string;
-  quantity: number;
-  mpn: string;
-  datasheet_url: string;
-}
+import { Part, PartSchema } from "@/lib/validation";
 
 interface AddPartFormProps {
   onSuccess: () => void;
@@ -40,54 +29,55 @@ export default function AddPartForm({ onSuccess, saveParts, parts }: AddPartForm
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.sku || !formData.location) {
-      toast.error("لطفاً فیلدهای نام، SKU و مکان را پر کنید");
-      return;
-    }
-
-    if (formData.quantity < 0) {
-      toast.error("موجودی اولیه نمی‌تواند منفی باشد");
-      return;
-    }
-
     setLoading(true);
 
-    const sku = formData.sku.toUpperCase().trim();
-    
-    // Check for duplicate SKU
-    if (parts.some(p => p.sku === sku)) {
-      toast.error(`قطعه با SKU: ${formData.sku} قبلاً ثبت شده است`);
+    try {
+      const sku = formData.sku.toUpperCase().trim();
+      
+      // Check for duplicate SKU
+      if (parts.some(p => p.sku === sku)) {
+        toast.error(`قطعه با SKU: ${formData.sku} قبلاً ثبت شده است`);
+        setLoading(false);
+        return;
+      }
+
+      const newPart = {
+        id: crypto.randomUUID(),
+        name: formData.name.trim(),
+        sku,
+        category: formData.category,
+        footprint: formData.footprint.trim(),
+        location: formData.location.trim(),
+        quantity: formData.quantity,
+        mpn: formData.mpn.trim(),
+        datasheet_url: formData.datasheet_url.trim(),
+      };
+
+      // Validate with zod
+      const validated = PartSchema.parse(newPart);
+
+      saveParts([...parts, validated]);
+      toast.success(`قطعه ${formData.name} با موفقیت افزوده شد`);
+      setFormData({
+        name: "",
+        sku: "",
+        category: "مقاومت",
+        footprint: "",
+        location: "",
+        quantity: 0,
+        mpn: "",
+        datasheet_url: "",
+      });
+      onSuccess();
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(`خطا: ${error.message}`);
+      } else {
+        toast.error("خطا در ثبت قطعه");
+      }
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const newPart: Part = {
-      id: crypto.randomUUID(),
-      name: formData.name,
-      sku,
-      category: formData.category,
-      footprint: formData.footprint,
-      location: formData.location,
-      quantity: formData.quantity,
-      mpn: formData.mpn.trim(),
-      datasheet_url: formData.datasheet_url.trim(),
-    };
-
-    saveParts([...parts, newPart]);
-    toast.success(`قطعه ${formData.name} با موفقیت افزوده شد`);
-    setFormData({
-      name: "",
-      sku: "",
-      category: "مقاومت",
-      footprint: "",
-      location: "",
-      quantity: 0,
-      mpn: "",
-      datasheet_url: "",
-    });
-    onSuccess();
-    setLoading(false);
   };
 
   return (
