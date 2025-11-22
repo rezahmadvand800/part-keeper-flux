@@ -1,19 +1,14 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Part, safeLoadFromStorage, safeSaveToStorage, PartSchema, Transaction, TransactionSchema } from "@/lib/validation";
 
-interface Part {
-  id: string;
-  name: string;
-  sku: string;
-  location: string;
-  quantity: number;
-}
+const PARTS_KEY = 'parts';
+const TRANSACTIONS_KEY = 'transactions';
 
 export default function TransactionForm() {
   const [parts, setParts] = useState<Part[]>([]);
@@ -26,22 +21,14 @@ export default function TransactionForm() {
     fetchParts();
   }, []);
 
-  const fetchParts = async () => {
-    const { data, error } = await supabase
-      .from('parts')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching parts:', error);
-    } else {
-      setParts(data || []);
-    }
+  const fetchParts = () => {
+    const loadedParts = safeLoadFromStorage(PARTS_KEY, PartSchema);
+    setParts(loadedParts);
   };
 
   const selectedPart = parts.find(p => p.sku.toLowerCase() === sku.toLowerCase());
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedPart) {
@@ -65,48 +52,44 @@ export default function TransactionForm() {
 
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("لطفاً ابتدا وارد شوید");
-      setLoading(false);
-      return;
-    }
+    try {
+      // Update part quantity
+      const updatedParts = parts.map(p =>
+        p.id === selectedPart.id ? { ...p, quantity: newQuantity } : p
+      );
+      
+      if (!safeSaveToStorage(PARTS_KEY, updatedParts, PartSchema)) {
+        throw new Error('خطا در به‌روزرسانی موجودی');
+      }
 
-    // Update part quantity
-    const { error: updateError } = await supabase
-      .from('parts')
-      .update({ quantity: newQuantity })
-      .eq('id', selectedPart.id);
-
-    if (updateError) {
-      console.error('Error updating part:', updateError);
-      toast.error("خطا در به‌روزرسانی موجودی");
-      setLoading(false);
-      return;
-    }
-
-    // Log transaction
-    const { error: transactionError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
+      // Log transaction
+      const transactions = safeLoadFromStorage(TRANSACTIONS_KEY, TransactionSchema);
+      const newTransaction: Transaction = {
+        id: crypto.randomUUID(),
         part_sku: selectedPart.sku,
         type,
         quantity,
         date: new Date().toLocaleDateString('fa-IR'),
-      });
+        created_at: new Date().toISOString(),
+      };
+      
+      if (!safeSaveToStorage(TRANSACTIONS_KEY, [...transactions, newTransaction], TransactionSchema)) {
+        throw new Error('خطا در ثبت تراکنش');
+      }
 
-    if (transactionError) {
-      console.error('Error logging transaction:', transactionError);
-      toast.error("خطا در ثبت تراکنش");
-    } else {
       toast.success(`تراکنش ${type} برای ${selectedPart.name} با موفقیت ثبت شد`);
       setSku("");
       setQuantity(1);
       fetchParts(); // Refresh parts list
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("خطا در ثبت تراکنش");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

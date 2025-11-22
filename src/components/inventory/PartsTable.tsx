@@ -1,18 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Edit, Trash2, Package, MapPin } from "lucide-react";
 import { toast } from "sonner";
-
-interface Part {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  footprint: string;
-  location: string;
-  quantity: number;
-  mpn: string;
-  datasheet_url: string;
-}
+import { Part } from "@/lib/validation";
 
 interface PartsTableProps {
   parts: Part[];

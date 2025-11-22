@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Package, TrendingUp, MapPin, Sparkles } from "lucide-react";
+import { Part, safeLoadFromStorage, PartSchema } from "@/lib/validation";
 
-interface Part {
-  id: string;
-  name: string;
-  quantity: number;
-  location: string;
-  sku: string;
-  category: string;
-}
+const STORAGE_KEY = 'parts';
 
 export default function Dashboard() {
   const [parts, setParts] = useState<Part[]>([]);
@@ -20,10 +14,8 @@ export default function Dashboard() {
   }, []);
 
   const fetchParts = () => {
-    const storedParts = localStorage.getItem('parts');
-    if (storedParts) {
-      setParts(JSON.parse(storedParts));
-    }
+    const loadedParts = safeLoadFromStorage(STORAGE_KEY, PartSchema);
+    setParts(loadedParts);
     setLoading(false);
   };
 

@@ -3,18 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-
-interface Part {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  footprint: string;
-  location: string;
-  quantity: number;
-  mpn: string;
-  datasheet_url: string;
-}
+import { Part, PartSchema } from "@/lib/validation";
 
 interface EditPartModalProps {
   part: Part;
@@ -39,32 +28,37 @@ export default function EditPartModal({ part, onClose, onSuccess, saveParts, all
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.location) {
-      toast.error("لطفاً نام و مکان را پر کنید");
-      return;
+    try {
+      const updatedPart = {
+        ...part,
+        name: formData.name.trim(),
+        category: formData.category,
+        footprint: formData.footprint.trim(),
+        location: formData.location.trim(),
+        mpn: formData.mpn.trim(),
+        datasheet_url: formData.datasheet_url.trim(),
+      };
+
+      // Validate with zod
+      const validated = PartSchema.parse(updatedPart);
+
+      const updatedParts = allParts.map(p =>
+        p.id === part.id ? validated : p
+      );
+
+      saveParts(updatedParts);
+      toast.success(`قطعه ${formData.name} با موفقیت ویرایش شد`);
+      onSuccess();
+      onClose();
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(`خطا: ${error.message}`);
+      } else {
+        toast.error("خطا در ویرایش قطعه");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(true);
-
-    const updatedParts = allParts.map(p =>
-      p.id === part.id
-        ? {
-            ...p,
-            name: formData.name,
-            category: formData.category,
-            footprint: formData.footprint,
-            location: formData.location,
-            mpn: formData.mpn.trim(),
-            datasheet_url: formData.datasheet_url.trim(),
-          }
-        : p
-    );
-
-    saveParts(updatedParts);
-    toast.success(`قطعه ${formData.name} با موفقیت ویرایش شد`);
-    onSuccess();
-    onClose();
-    setLoading(false);
   };
 
   return (
